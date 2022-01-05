@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using CommandLine;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using System.CommandLine;
 using QRCoder;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -12,19 +9,34 @@ using A = DocumentFormat.OpenXml.Drawing;
 using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
 
-namespace WordProcessingEx
+namespace QRWordInjector
 {
     class Program
     {
+        public class Options
+        {
+            [Option('f', "file", Required = true, HelpText = "Set file to add QR code.")]
+            public string filename { get; set; }
+
+            [Option('t', "text", Required = true, HelpText = "Set text for QR code.")]
+            public string QRCodeData { get; set; }
+        }
         static void Main(string[] args)
         {
-            // Apply the Heading 3 style to a paragraph.   
-            string fileName = @"C:\Users\Public\Documents\demo.docx";
-            string imgName = @"C:\Users\Public\Documents\testqr2.jpg";
-            string QRCodeData = @"The text which should be encoded.";
+            string stringtoencode = @"placeholder";
+            string fileName = @"placeholder";
+            Parser.Default.ParseArguments<Options>(args)
+               .WithParsed<Options>(o =>
+               {
+                   fileName = o.filename;
+                   stringtoencode = o.QRCodeData;
+               })
+               .WithNotParsed<Options>(o =>
+               { Environment.Exit(1); });
             using (WordprocessingDocument myDocument = WordprocessingDocument.Open(fileName, true))
 
             {
+
                 MainDocumentPart mainPart = myDocument.MainDocumentPart;
                 HeaderPart headerPart = mainPart.HeaderParts.FirstOrDefault();
                 if (headerPart == null)
@@ -47,7 +59,7 @@ namespace WordProcessingEx
                 Header hd = headerPart.Header;
                 ImagePart img = headerPart.AddImagePart(ImagePartType.Jpeg);
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
-                QRCodeData qrCodeData = qrGenerator.CreateQrCode(QRCodeData, QRCodeGenerator.ECCLevel.Q);
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(stringtoencode, QRCodeGenerator.ECCLevel.Q);
                 QRCode qrCode = new QRCode(qrCodeData);
                 Bitmap qrCodeImage = qrCode.GetGraphic(20);
                 using (MemoryStream stream1 = new MemoryStream())
