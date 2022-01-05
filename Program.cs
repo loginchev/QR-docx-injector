@@ -5,7 +5,9 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.CommandLine;
-//using System.CommandLine.Invocation;
+using QRCoder;
+using System.Drawing;
+using System.Drawing.Imaging;
 using A = DocumentFormat.OpenXml.Drawing;
 using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
@@ -18,7 +20,8 @@ namespace WordProcessingEx
         {
             // Apply the Heading 3 style to a paragraph.   
             string fileName = @"C:\Users\Public\Documents\demo.docx";
-            string imgName = @"C:\Users\Public\Documents\testqr.jpg";
+            string imgName = @"C:\Users\Public\Documents\testqr2.jpg";
+            string QRCodeData = @"The text which should be encoded.";
             using (WordprocessingDocument myDocument = WordprocessingDocument.Open(fileName, true))
 
             {
@@ -43,14 +46,18 @@ namespace WordProcessingEx
                 }
                 Header hd = headerPart.Header;
                 ImagePart img = headerPart.AddImagePart(ImagePartType.Jpeg);
-                using (FileStream stream = new FileStream(imgName, FileMode.Open))
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(QRCodeData, QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
+                Bitmap qrCodeImage = qrCode.GetGraphic(20);
+                using (MemoryStream stream1 = new MemoryStream())
                 {
-                    img.FeedData(stream);
+                    qrCodeImage.Save(stream1, ImageFormat.Jpeg);
+                    stream1.Seek(0, SeekOrigin.Begin);
+                    img.FeedData(stream1);
                 }
                 AddImageToHeader(hd, headerPart.GetIdOfPart(img));
             }
-            Console.WriteLine("All done. Press a key.");
-            //Console.ReadKey();
         }
         private static void AddImageToHeader(Header hd, string relationshipId)
         {
