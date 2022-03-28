@@ -1,7 +1,8 @@
 {
   "profiles": {
     "QR docx injector": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-f \"C:\\Users\\Anton\\Documents\\1.docx\" -t \"somefuckingtext\""
     }
   }
 }

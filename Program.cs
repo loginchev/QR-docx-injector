@@ -39,24 +39,24 @@ namespace QRWordInjector
 
                 MainDocumentPart mainPart = myDocument.MainDocumentPart;
                 HeaderPart headerPart = mainPart.HeaderParts.FirstOrDefault();
-                if (headerPart == null)
-                { headerPart = mainPart.AddNewPart<HeaderPart>(); }
-
-                if (headerPart.Header == null)
+                headerPart = mainPart.AddNewPart<HeaderPart>();
+                string rId = mainPart.GetIdOfPart(headerPart);
+                Header hd = new Header();
+                headerPart.Header = hd;
+                HeaderReference headerReference1 = new HeaderReference() { Type = HeaderFooterValues.First, Id = rId };
+                /*foreach (SectionProperties sectProperties in mainPart.Document.Descendants<SectionProperties>().First())
                 {
-                    headerPart.Header = new Header();
-                    string rId = mainPart.GetIdOfPart(headerPart);
-                    foreach (SectionProperties sectProperties in mainPart.Document.Descendants<SectionProperties>())
-                    {
-                        foreach (HeaderReference headerReference in sectProperties.Descendants<HeaderReference>())
-                            sectProperties.RemoveChild(headerReference);
-                        HeaderReference newHeaderReference = new HeaderReference() { Id = rId, Type = HeaderFooterValues.Default };
-                        sectProperties.Append(newHeaderReference);
-                    }
-                    HeaderReference headerReference1 = new HeaderReference() { Type = HeaderFooterValues.Default, Id = rId };
-                    IEnumerable<SectionProperties> sections = mainPart.Document.Body.Elements<SectionProperties>();
-                }
-                Header hd = headerPart.Header;
+                    DocGrid docGrid1 = sectProperties.GetFirstChild<DocGrid>();
+                    TitlePage titlePage1 = new TitlePage();
+                    sectProperties.InsertBefore(titlePage1, docGrid1);
+                    sectProperties.Append(headerReference1);
+                }*/
+                SectionProperties sectProperties = mainPart.Document.Descendants<SectionProperties>().First();
+                DocGrid docGrid1 = sectProperties.GetFirstChild<DocGrid>();
+                TitlePage titlePage1 = new TitlePage();
+                sectProperties.InsertBefore(titlePage1, docGrid1);
+                sectProperties.Append(headerReference1);
+
                 ImagePart img = headerPart.AddImagePart(ImagePartType.Jpeg);
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(stringtoencode, QRCodeGenerator.ECCLevel.Q);
@@ -69,6 +69,10 @@ namespace QRWordInjector
                     img.FeedData(stream1);
                 }
                 AddImageToHeader(hd, headerPart.GetIdOfPart(img));
+                foreach (HeaderPart hdp in mainPart.HeaderParts) { if (hdp != headerPart) {
+                        foreach (Paragraph p in hdp.Header.Descendants<Paragraph>())
+                            headerPart.Header.AppendChild(p.CloneNode(true));
+                    } }
             }
         }
         private static void AddImageToHeader(Header hd, string relationshipId)
@@ -138,7 +142,9 @@ namespace QRWordInjector
                      });
 
             // Append the reference to body, the element should be in a Run.
-            hd.AppendChild(new Paragraph(new Run(element)));
+            //hd.AppendChild(new Paragraph(new Run(element)));
+            Paragraph p = hd.GetFirstChild<Paragraph>();
+            hd.InsertBefore(new Paragraph(new Run(element)), p);
         }
     }
 }
